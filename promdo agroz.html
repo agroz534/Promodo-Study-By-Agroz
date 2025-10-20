@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promdo Grinder by Agroz</title>
+<style>
+/* ---------- BASE ---------- */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 60px;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ---------- LIVE BST CLOCK ---------- */
+#bstClock {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  font-size: 2.4em;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+  background-color: rgba(20,20,20,0.85);
+  padding: 10px 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  z-index: 1000;
+}
+
+/* ---------- CONTAINER ---------- */
+.container {
+  width: 460px;
+  background: rgba(10,10,10,0.85);
+  backdrop-filter: blur(10px);
+  padding: 35px;
+  border-radius: 22px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+  position: relative;
+  z-index: 1;
+  animation: fadeIn 1s ease-in-out;
+}
+@keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
+/* ---------- TITLE ---------- */
+h1 {
+  text-align: center;
+  color: #ff1744;
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+
+/* ---------- TIMER ---------- */
+.timer-wrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 20px auto;
+}
+.timer-circle { transform: rotate(-90deg); }
+.timer-circle circle { fill: none; stroke-width: 12; stroke-linecap: round; }
+.timer-bg { stroke: #333; }
+.timer-progress { stroke: #ff1744; stroke-dasharray: 628; stroke-dashoffset: 628; transition: stroke-dashoffset 1s linear; }
+.timer-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 3em;
+  font-weight: bold;
+  text-align: center;
+  color: #ff1744;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{transform:translate(-50%,-50%) scale(1);} 50%{transform:translate(-50%,-50%) scale(1.05);} }
+
+/* ---------- STATUS ---------- */
+.status { text-align: center; margin-bottom: 20px; font-size: 1.2em; color: #ff8a80; transition: color 0.5s; }
+
+/* ---------- BUTTONS ---------- */
+.buttons { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;}
+button {
+  padding: 14px 20px;
+  font-size: 1.1em;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background-color: #ff1744;
+  color: white;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s;
+}
+button:hover { transform: translateY(-3px); box-shadow:0 7px 18px rgba(0,0,0,0.5); background-color:#d50000; }
+button:active { transform: scale(0.95); }
+
+/* ---------- TASK LIST ---------- */
+.task-list input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: none;
+  background-color: #111;
+  color: white;
+  transition: background 0.5s;
+}
+.task-list ul { list-style: none; padding:0; max-height:200px; overflow-y:auto; }
+.task-list li {
+  padding: 14px;
+  margin-bottom: 10px;
+  background-color: #1a1a1a;
+  border-radius: 10px;
+  display:flex; justify-content:space-between; align-items:center;
+  transition: all 0.3s;
+}
+.task-list li.completed { text-decoration: line-through; opacity:0.6; background-color:#111; transform:translateX(-10px); }
+.task-list li button { background-color:#d50000; padding:6px 12px; font-size:0.9em; border-radius:5px; }
+
+/* ---------- SUBJECT SELECTOR ---------- */
+.subject-select { margin-bottom: 20px; text-align:center; }
+.subject-select select { padding:12px; border-radius:10px; border:none; background-color:#111; color:white; font-size:1.05em; transition:background 0.5s; }
+
+/* ---------- PROGRESS ---------- */
+.progress { margin-top: 25px; text-align:center; }
+.progress-bar { height: 10px; width:100%; background-color:#111; border-radius:8px; overflow:hidden; margin-top:8px; }
+.progress-bar-fill { height:100%; width:0%; background: linear-gradient(90deg,#ff1744,#ff5252); transition:width 0.8s linear; box-shadow:0 0 8px #ff1744; }
+
+/* ---------- THEMES ---------- */
+body.darkred { background:#000; color:#fff; }
+body.darkred #bstClock { color:#ffd700; background:rgba(30,30,30,0.85);}
+body.darkred .container { background: rgba(10,10,10,0.85); }
+body.darkred button { background:#ff1744; }
+body.darkred button:hover { background:#d50000; }
+body.darkgray { background:#0a0a0a; color:#ccc; }
+body.darkgray #bstClock { color:#ffd700; background:rgba(30,30,30,0.85);}
+body.darkgray .container { background:#111; }
+body.darkgray button { background:#90caf9; }
+body.darkgray button:hover { background:#1e88e5; }
+
+/* ---------- LEGEND ADVICE ---------- */
+.advice-left, .advice-right {
+  position: fixed;
+  top: 150px;
+  width: 45%;
+  font-size: 1.4em;
+  font-weight: bold;
+  z-index: 1000;
+  white-space: pre-wrap;
+}
+.advice-left { left: 10px; text-align: left; }
+.advice-right { right: 10px; text-align: right; }
+.legend-name { font-size: 0.9em; font-style: italic; display:block; margin-top:4px;}
+</style>
+</head>
+<body>
+
+<div id="bstClock">00:00:00 AM</div>
+<div class="advice-left" id="adviceLeft"></div>
+<div class="advice-right" id="adviceRight"></div>
+
+<div class="container">
+<h1>Promdo Grinder by Agroz</h1>
+
+<div class="subject-select">
+<label for="subject">Subject:</label>
+<select id="subject">
+<option value="Math">Math</option>
+<option value="Bio">Biology</option>
+<option value="Chem">Chemistry</option>
+<option value="Coding">Coding</option>
+<option value="Other">Other</option>
+</select>
+</div>
+
+<div class="timer-wrapper">
+<svg class="timer-circle" width="220" height="220">
+<circle class="timer-bg" cx="110" cy="110" r="100"></circle>
+<circle class="timer-progress" cx="110" cy="110" r="100"></circle>
+</svg>
+<div class="timer-text" id="timer">30:00</div>
+</div>
+
+<div class="status" id="status">Ready to work!</div>
+
+<div class="buttons">
+<button id="startBtn">Start</button>
+<button id="pauseBtn">Pause</button>
+<button id="resetBtn">Reset</button>
+<button id="skipBtn">Skip</button>
+<select id="musicSelector">
+<option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Focus Track 1</option>
+<option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Focus Track 2</option>
+<option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Focus Track 3</option>
+</select>
+<button id="stopMusicBtn">Stop Music</button>
+</div>
+
+<div class="task-list">
+<input type="text" id="taskInput" placeholder="Add a task...">
+<ul id="taskList"></ul>
+</div>
+
+<div class="progress">
+<p>Pomodoros Completed: <span id="pomodoroCount">0</span></p>
+<div class="progress-bar">
+<div class="progress-bar-fill" id="progressFill"></div>
+</div>
+</div>
+
+<audio id="bellSound" src="https://www.soundjay.com/button/sounds/button-09.mp3"></audio>
+<audio id="taskCompleteSound" src="https://www.soundjay.com/button/sounds/button-10.mp3"></audio>
+<audio id="skipSound" src="https://www.soundjay.com/button/sounds/button-7.mp3"></audio>
+<audio id="focusMusic" loop></audio>
+
+<script>
+// ----------------- CLOCK -----------------
+const bstClock=document.getElementById('bstClock');
+function updateBSTClock(){
+  const now=new Date();
+  const utc=now.getTime()+(now.getTimezoneOffset()*60000);
+  const bstTime=new Date(utc+(6*60*60000));
+  let h=bstTime.getHours();
+  const ampm=h>=12?'PM':'AM'; h=h%12; h=h? h:12;
+  let m=bstTime.getMinutes(), s=bstTime.getSeconds();
+  bstClock.textContent=`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')} ${ampm}`;
+}
+setInterval(updateBSTClock,1000); updateBSTClock();
+
+// ----------------- THEME -----------------
+function updateTheme(){
+  const hour=new Date().getHours();
+  document.body.classList.remove('darkred','darkgray');
+  if(hour>=7 && hour<19) document.body.classList.add('darkred');
+  else document.body.classList.add('darkgray');
+}
+setInterval(updateTheme,60000); updateTheme();
+
+// ----------------- POMODORO -----------------
+let workDuration=30*60, breakDuration=5*60, timeLeft=workDuration;
+let timerInterval, onBreak=false, pomodoroCount=0;
+const timerDisplay=document.getElementById('timer');
+const statusDisplay=document.getElementById('status');
+const startBtn=document.getElementById('startBtn');
+const pauseBtn=document.getElementById('pauseBtn');
+const resetBtn=document.getElementById('resetBtn');
+const skipBtn=document.getElementById('skipBtn');
+const progressFill=document.getElementById('progressFill');
+const bellSound=document.getElementById('bellSound');
+const taskCompleteSound=document.getElementById('taskCompleteSound');
+const skipSound=document.getElementById('skipSound');
+const focusMusic=document.getElementById('focusMusic');
+const musicSelector=document.getElementById('musicSelector');
+const stopMusicBtn=document.getElementById('stopMusicBtn');
+
+if(localStorage.getItem('pomodoroCount')) pomodoroCount=parseInt(localStorage.getItem('pomodoroCount'));
+document.getElementById('pomodoroCount').textContent=pomodoroCount;
+
+function updateTimer(){
+  let min=Math.floor(timeLeft/60), sec=timeLeft%60;
+  timerDisplay.textContent=`${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  progressFill.style.width=((pomodoroCount%4)/4*100)+'%';
+  document.querySelector('.timer-progress').style.strokeDashoffset=628-(628*(timeLeft/(onBreak?breakDuration:workDuration)));
+}
+
+function startTimer(){
+  clearInterval(timerInterval);
+  if(focusMusic.paused){focusMusic.src=musicSelector.value; focusMusic.play();}
+  timerInterval=setInterval(()=>{
+    timeLeft--; updateTimer();
+    if(timeLeft<=0){
+      clearInterval(timerInterval);
+      if(!onBreak){ pomodoroCount++; bellSound.play();}
+      else taskCompleteSound.play();
+      localStorage.setItem('pomodoroCount',pomodoroCount);
+      document.getElementById('pomodoroCount').textContent=pomodoroCount;
+      onBreak=!onBreak;
+      timeLeft=onBreak?breakDuration:workDuration;
+      statusDisplay.textContent=onBreak?"Break time!":"Work time!";
+      startTimer();
+    }
+  },1000);
+}
+
+startBtn.addEventListener('click',()=>{statusDisplay.textContent=onBreak?"Break time!":"Work time!"; startTimer(); startAdviceTimer();});
+pauseBtn.addEventListener('click',()=>{clearInterval(timerInterval); focusMusic.pause(); clearInterval(adviceInterval);});
+resetBtn.addEventListener('click',()=>{clearInterval(timerInterval); onBreak=false; timeLeft=workDuration; updateTimer(); statusDisplay.textContent="Ready to work!"; startAdviceTimer();});
+skipBtn.addEventListener('click',()=>{skipSound.play(); clearInterval(timerInterval); onBreak=!onBreak; timeLeft=onBreak?breakDuration:workDuration; updateTimer(); statusDisplay.textContent=onBreak?"Break time!":"Work time!"; startTimer();});
+stopMusicBtn.addEventListener('click',()=>{focusMusic.pause(); focusMusic.currentTime=0;});
+
+// ----------------- TASKS -----------------
+const taskInput=document.getElementById('taskInput');
+const taskList=document.getElementById('taskList');
+let tasks=JSON.parse(localStorage.getItem('tasks'))||[];
+function renderTasks(){
+  taskList.innerHTML='';
+  tasks.forEach((t,i)=>{
+    const li=document.createElement('li'); li.textContent=t.text;
+    if(t.completed) li.classList.add('completed');
+    li.addEventListener('click',()=>{
+      t.completed=!t.completed; taskCompleteSound.play();
+      localStorage.setItem('tasks',JSON.stringify(tasks));
+      renderTasks();
+    });
+    const delBtn=document.createElement('button'); delBtn.textContent="X";
+    delBtn.addEventListener('click',()=>{tasks.splice(i,1); localStorage.setItem('tasks',JSON.stringify(tasks)); renderTasks();});
+    li.appendChild(delBtn); taskList.appendChild(li);
+  });
+}
+renderTasks();
+function addTask(){ if(taskInput.value.trim()!==''){tasks.push({text:taskInput.value,completed:false}); localStorage.setItem('tasks',JSON.stringify(tasks)); taskInput.value=''; renderTasks();} }
+taskInput.addEventListener('keypress',e=>{if(e.key==='Enter') addTask();});
+
+updateTimer();
+
+// ----------------- 100 LEGEND ADVICE -----------------
+const advices=[
+{advice:"Study while others sleep",legend:"Leonardo da Vinci"},
+{advice:"Never give up",legend:"Thomas Edison"},
+{advice:"Consistency is key",legend:"Albert Einstein"},
+{advice:"Practice makes perfect",legend:"Michael Jordan"},
+{advice:"Learn from failure",legend:"Steve Jobs"},
+{advice:"Stay curious",legend:"Marie Curie"},
+{advice:"Challenge yourself",legend:"Isaac Newton"},
+{advice:"Time is precious",legend:"Benjamin Franklin"},
+{advice:"Focus on quality",legend:"Nikola Tesla"},
+{advice:"Ask questions",legend:"Richard Feynman"},
+{advice:"Break tasks into steps",legend:"Aristotle"},
+{advice:"Visualize success",legend:"Walt Disney"},
+{advice:"Discipline equals freedom",legend:"Jocko Willink"},
+{advice:"Never stop reading",legend:"Bill Gates"},
+{advice:"Write daily notes",legend:"Leonardo da Vinci"},
+{advice:"Take care of health",legend:"Hippocrates"},
+{advice:"Teach others",legend:"Confucius"},
+{advice:"Avoid distractions",legend:"Stephen Hawking"},
+{advice:"Embrace mistakes",legend:"Thomas Edison"},
+{advice:"Stay humble",legend:"Dalai Lama"},
+{advice:"Be patient",legend:"Mahatma Gandhi"},
+{advice:"Set clear goals",legend:"Tony Robbins"},
+{advice:"Prioritize tasks",legend:"David Allen"},
+{advice:"Keep a journal",legend:"Marcus Aurelius"},
+{advice:"Meditate daily",legend:"Buddha"},
+{advice:"Stay organized",legend:"Marie Kondo"},
+{advice:"Limit social media",legend:"Cal Newport"},
+{advice:"Exercise regularly",legend:"Arnold Schwarzenegger"},
+{advice:"Sleep well",legend:"Arianna Huffington"},
+{advice:"Seek mentors",legend:"John C. Maxwell"},
+{advice:"Think critically",legend:"Socrates"},
+{advice:"Experiment boldly",legend:"Richard Feynman"},
+{advice:"Celebrate small wins",legend:"Robin Sharma"},
+{advice:"Reflect often",legend:"Seneca"},
+{advice:"Manage energy",legend:"Tony Schwartz"},
+{advice:"Stay adaptable",legend:"Charles Darwin"},
+{advice:"Plan ahead",legend:"Sun Tzu"},
+{advice:"Keep learning",legend:"Leonardo da Vinci"},
+{advice:"Observe keenly",legend:"Jane Goodall"},
+{advice:"Be accountable",legend:"Brené Brown"},
+{advice:"Value your time",legend:"Benjamin Franklin"},
+{advice:"Embrace challenges",legend:"Richard Branson"},
+{advice:"Be curious about everything",legend:"Galileo Galilei"},
+{advice:"Persist",legend:"Thomas Edison"},
+{advice:"Focus on fundamentals",legend:"Albert Einstein"},
+{advice:"Ask why",legend:"Socrates"},
+{advice:"Stay motivated",legend:"Tony Robbins"},
+{advice:"Take risks wisely",legend:"Elon Musk"},
+{advice:"Learn from masters",legend:"Leonardo da Vinci"},
+{advice:"Be proactive",legend:"Stephen Covey"},
+{advice:"Document progress",legend:"Benjamin Franklin"},
+{advice:"Read classics",legend:"Marcus Aurelius"},
+{advice:"Experiment often",legend:"Nikola Tesla"},
+{advice:"Simplify",legend:"Leonardo da Vinci"},
+{advice:"Network effectively",legend:"Reid Hoffman"},
+{advice:"Be consistent",legend:"Angela Duckworth"},
+{advice:"Set deadlines",legend:"David Allen"},
+{advice:"Stay focused",legend:"Cal Newport"},
+{advice:"Act decisively",legend:"Winston Churchill"},
+{advice:"Keep promises",legend:"Abraham Lincoln"},
+{advice:"Measure progress",legend:"Peter Drucker"},
+{advice:"Review daily",legend:"Jim Rohn"},
+{advice:"Reflect on learning",legend:"Aristotle"},
+{advice:"Solve problems creatively",legend:"Richard Feynman"},
+{advice:"Challenge assumptions",legend:"Elon Musk"},
+{advice:"Take breaks wisely",legend:"Tony Schwartz"},
+{advice:"Embrace curiosity",legend:"Marie Curie"},
+{advice:"Track habits",legend:"James Clear"},
+{advice:"Visualize goals",legend:"Napoleon Hill"},
+{advice:"Learn languages",legend:"Leonardo da Vinci"},
+{advice:"Be adaptable",legend:"Charles Darwin"},
+{advice:"Keep a clean environment",legend:"Marie Kondo"},
+{advice:"Minimize distractions",legend:"Cal Newport"},
+{advice:"Ask for feedback",legend:"Bill Gates"},
+{advice:"Read daily",legend:"Warren Buffett"},
+{advice:"Think ahead",legend:"Sun Tzu"},
+{advice:"Be mindful",legend:"Buddha"},
+{advice:"Embrace solitude",legend:"Marcus Aurelius"},
+{advice:"Plan tasks",legend:"David Allen"},
+{advice:"Stay energized",legend:"Tony Schwartz"},
+{advice:"Reflect on goals",legend:"Napoleon Hill"},
+{advice:"Use first principles",legend:"Elon Musk"},
+{advice:"Write ideas",legend:"Leonardo da Vinci"},
+{advice:"Practice gratitude",legend:"Oprah Winfrey"},
+{advice:"Solve daily challenges",legend:"Richard Feynman"},
+{advice:"Stay determined",legend:"Thomas Edison"},
+{advice:"Be disciplined",legend:"Jocko Willink"},
+{advice:"Learn by doing",legend:"Aristotle"},
+{advice:"Challenge yourself daily",legend:"Michael Jordan"},
+{advice:"Pursue mastery",legend:"Leonardo da Vinci"},
+{advice:"Stay curious and humble",legend:"Albert Einstein"},
+{advice:"Focus on process",legend:"Cal Newport"},
+{advice:"Seek wisdom",legend:"Socrates"},
+{advice:"Be intentional",legend:"Tony Robbins"},
+{advice:"Observe carefully",legend:"Jane Goodall"},
+{advice:"Embrace learning",legend:"Richard Feynman"},
+{advice:"Act with purpose",legend:"Mahatma Gandhi"},
+{advice:"Think long-term",legend:"Warren Buffett"},
+{advice:"Review work",legend:"Jim Rohn"},
+{advice:"Persist despite failure",legend:"Thomas Edison"},
+{advice:"Keep curiosity alive",legend:"Leonardo da Vinci"},
+{advice:"Value knowledge",legend:"Albert Einstein"},
+{advice:"Plan effectively",legend:"Sun Tzu"},
+{advice:"Reflect on mistakes",legend:"Steve Jobs"}
+];
+
+let adviceIndex=0, adviceInterval;
+const adviceLeft=document.getElementById('adviceLeft');
+const adviceRight=document.getElementById('adviceRight');
+
+function getRandomColor(){ return `rgb(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)})`; }
+
+function typeAdvice(){ 
+  const {advice,legend}=advices[adviceIndex];
+  adviceLeft.innerHTML=''; adviceRight.innerHTML='';
+  let i=0;
+  const interval=setInterval(()=>{
+    if(i<advice.length){
+      adviceLeft.innerHTML+=`<span style="color:${getRandomColor()}">${advice[i]}</span>`; 
+      adviceRight.innerHTML+=`<span style="color:${getRandomColor()}">${advice[i]}</span>`; 
+      i++;
+    } else {
+      clearInterval(interval);
+      adviceLeft.innerHTML+=`<span class="legend-name">- ${legend}</span>`;
+      adviceRight.innerHTML+=`<span class="legend-name">- ${legend}</span>`;
+    }
+  },50);
+  adviceIndex=(adviceIndex+1)%advices.length;
+}
+
+function startAdviceTimer(){ clearInterval(adviceInterval); typeAdvice(); adviceInterval=setInterval(typeAdvice,180000); }
+
+</script>
+</body>
+</html>
